@@ -1,0 +1,314 @@
+library(shiny)
+library(scales)
+library(tidyverse)
+library(gridExtra)
+library(palmerpenguins)
+library(viridis)
+library(ggdensity)
+library(ggridges)
+library(ggdist)
+library(GGally)
+
+
+viridis_palette_names <- c("magma", "inferno", "plasma", "viridis", "cividis", "rocket", "mako", "turbo")
+
+penguins <- na.omit(penguins)
+mean_mass <- penguins %>%
+  group_by(species, sex) %>% 
+  summarise(mean_mass = mean(body_mass_g, na.rm = TRUE)) 
+means <- aggregate(body_mass_g ~ species, data = penguins, mean)
+
+
+ui <- fluidPage(
+  tabsetPanel(
+    tabPanel("Plots",
+             radioButtons("palette", "Select Viridis ColorPalette:", 
+                          choices = viridis_palette_names, 
+                          selected = "magma", inline = TRUE),
+             column(12, plotOutput("density1"), plotOutput("density2"), 
+                    plotOutput("density3"), plotOutput("density4"), plotOutput("density5"),plotOutput("density6"),plotOutput("density7"),plotOutput("density8"),plotOutput("density9"),plotOutput("density10"),plotOutput("density11"),plotOutput("density12")),
+             column(12, textOutput("density1_code"), textOutput("density2_code"), 
+                    textOutput("density3_code"), textOutput("density4_code"), textOutput("density5_code"),textOutput("density6_code"),textOutput("density7_code"),textOutput("density8_code"),textOutput("density9_code"),textOutput("density10_code"), textOutput("density11_code"), textOutput("density12_code"))
+    ),
+    tabPanel("Code",
+             verbatimTextOutput("text")
+    )
+  )
+)
+
+server <- function(input, output) {
+  
+  output$density1 <- renderPlot({
+    ggplot(penguins, aes(x = bill_length_mm, fill = species)) +
+      geom_density(alpha = 0.7) + theme_bw() +
+      scale_fill_viridis(option = input$palette, discrete = TRUE) +
+      theme(legend.position = c(0.8, 0.8))
+  })
+  
+  output$density2 <- renderPlot({
+    ggplot(penguins, aes(x = species, y = body_mass_g, fill=species)) +
+      geom_boxplot() +
+      scale_fill_viridis(option = input$palette, discrete = TRUE) +
+      theme(legend.position = c(0.1, 0.8))
+  })
+  
+  output$density3 <- renderPlot({
+    
+    ggplot(penguins, aes(x = species, y = body_mass_g, fill = species)) + 
+      geom_violin(alpha = 0.3) + 
+      geom_boxplot(width = 0.2) + 
+      geom_density(kernel = "gaussian", adjust = 2, fill = "white", alpha = 0.3) +
+      geom_point(alpha = 0.5, size = 2) +
+      geom_point(data = means, aes(x = species, y = body_mass_g), shape = 21, size = 4) +
+      theme_classic() + 
+      labs(x = "Species", y = "Body Mass (g)") + 
+      ggtitle("Palmer Penguins") + 
+      scale_fill_viridis(option = input$palette, discrete = TRUE) 
+    
+  })
+  
+  
+  output$density4 <- renderPlot({
+    ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, group = species)) +
+      geom_point(aes(color = species, shape = species), size = 3, alpha = 0.8) +
+      geom_smooth(aes(color = species, fill = species), method = "lm") + 
+      scale_color_viridis(discrete = TRUE, option = input$palette) +
+      scale_fill_viridis(discrete = TRUE) +
+      theme_classic() +
+      theme(legend.position = "bottom")
+    
+  })
+  
+  output$density5 <- renderPlot({
+    ggplot(penguins, aes(x = 1, fill = species)) +
+      geom_bar() +
+      coord_polar(theta = "y") +
+      theme_classic() + 
+      scale_fill_viridis(option = input$palette, discrete = TRUE) 
+  })
+  output$density6 <- renderPlot({
+    ggplot(penguins, aes(flipper_length_mm, bill_length_mm, fill = species)) +
+      geom_hdr(xlim = c(160, 240), ylim = c(30, 70)) +
+      geom_point(shape = 21) +
+      theme_classic() + 
+      scale_fill_viridis(option = input$palette, discrete = TRUE) 
+  })
+  
+  output$density7 <- renderPlot({
+    ggplot(data = penguins, aes(x = flipper_length_mm)) +
+      geom_histogram(aes(fill = species), alpha = 0.5, position = "identity") +
+      theme_classic() + 
+      scale_fill_viridis(option = input$palette, discrete = TRUE) 
+  })
+  
+  output$density8 <- renderPlot({
+    penguins %>%
+      select(species, body_mass_g, ends_with("_mm")) %>% 
+      GGally::ggpairs(aes(fill = species)) +
+      theme_classic() + 
+      scale_fill_viridis(option = input$palette, discrete = TRUE) 
+  })
+  output$density9 <- renderPlot({
+    ggplot(penguins) +
+      geom_density_ridges(
+        aes(x = flipper_length_mm, y = species, fill = sex),
+        scale = 1.5,
+        alpha = 0.5) + 
+      scale_fill_viridis(option = input$palette, discrete = TRUE) 
+  })
+  
+  output$density10 <- renderPlot({
+    penguins %>%
+      ggplot(aes(x=flipper_length_mm, y=species, fill=species))+
+      stat_slab(aes(thickness = stat(pdf*n)), 
+                scale = 0.7) +
+      stat_dotsinterval(side = "bottom", 
+                        scale = 0.7, 
+                        slab_size = NA) +
+      scale_fill_viridis(option = input$palette, discrete = TRUE) 
+  })
+  
+  output$density11 <- renderPlot({
+    penguins %>%
+      drop_na() %>%
+      count(sex, species) %>%
+      ggplot() + geom_col(aes(x = species, y = n, fill = species)) +
+      geom_label(aes(x = species, y = n, label = n)) +
+      facet_wrap(~sex) +
+      theme_minimal() +
+      scale_fill_viridis(option = input$palette, discrete = TRUE) +
+      labs(title = 'Penguins Species ~ Gender')
+  })
+  
+  output$density12 <- renderPlot({
+    ggparcoord(data = penguins, columns = 3:6, alphaLines = 0.2, groupColumn = "species", boxplot=TRUE) +
+      theme_minimal() +
+      scale_colour_viridis(option = input$palette, discrete = TRUE) +
+      labs(title = 'Penguins Species ~ Gender')
+  })
+  
+  tab1_code <- "
+  
+library(shiny)
+library(tidyverse)
+library(gridExtra)
+library(palmerpenguins)
+library(RColorBrewer)
+library(ggdensity)
+library(ggridges)
+library(ggdist)
+library(GGally)
+
+penguins <- na.omit(penguins)
+
+mean_mass <- penguins %>%
+  group_by(species, sex) %>% 
+  summarise(mean_mass = mean(body_mass_g, na.rm = TRUE)) 
+  
+means <- aggregate(body_mass_g ~ species, data = penguins, mean)
+  
+  
+ 
+library(scales)
+library(tidyverse)
+library(gridExtra)
+library(palmerpenguins)
+library(viridis)
+library(ggdensity)
+library(ggridges)
+library(ggdist)
+library(GGally)
+
+penguins <- na.omit(penguins)
+mean_mass <- penguins %>%
+  group_by(species, sex) %>% 
+  summarise(mean_mass = mean(body_mass_g, na.rm = TRUE)) 
+means <- aggregate(body_mass_g ~ species, data = penguins, mean)
+
+## PLOT 1
+
+ggplot(penguins, aes(x = bill_length_mm, fill = species)) +
+      geom_density(alpha = 0.7) + theme_bw() +
+      scale_fill_viridis(option = 'cividis', discrete = TRUE) +
+      theme(legend.position = c(0.8, 0.8))
+
+## PLOT 2  
+ 
+ggplot(penguins, aes(x = species, y = body_mass_g, fill=species)) +
+      geom_boxplot() +
+      scale_fill_viridis(option = 'cividis', discrete = TRUE) +
+      theme(legend.position = c(0.1, 0.8))
+ 
+## PLOT 3
+  
+    
+ggplot(penguins, aes(x = species, y = body_mass_g, fill = species)) + 
+      geom_violin(alpha = 0.3) + 
+      geom_boxplot(width = 0.2) + 
+      geom_density(kernel = 'gaussian', adjust = 2, fill = 'white', alpha = 0.3) +
+      geom_point(alpha = 0.5, size = 2) +
+      geom_point(data = means, aes(x = species, y = body_mass_g), shape = 21, size = 4) +
+      theme_classic() + 
+      labs(x = 'Species', y = 'Body Mass (g)') + 
+      ggtitle('Palmer Penguins') + 
+        scale_fill_viridis(option = 'cividis', discrete = TRUE) 
+   
+  
+## PLOT 4  
+
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, group = species)) +
+      geom_point(aes(color = species, shape = species), size = 3, alpha = 0.8) +
+      geom_smooth(aes(color = species, fill = species), method = 'lm') + 
+      scale_color_viridis(discrete = TRUE, option = 'cividis') +
+      scale_fill_viridis(discrete = TRUE) +
+      theme_classic() +
+      theme(legend.position = 'bottom')
+    
+  
+## PLOT 5
+
+ggplot(penguins, aes(x = 1, fill = species)) +
+      geom_bar() +
+      coord_polar(theta = 'y') +
+      theme_classic() + 
+       scale_fill_viridis(option = 'cividis', discrete = TRUE) 
+
+
+## PLOT 6
+
+ggplot(penguins, aes(flipper_length_mm, bill_length_mm, fill = species)) +
+      geom_hdr(xlim = c(160, 240), ylim = c(30, 70)) +
+      geom_point(shape = 21) +
+      theme_classic() + 
+       scale_fill_viridis(option = 'cividis', discrete = TRUE) 
+
+  
+ 
+## PLOT 7
+
+ggplot(data = penguins, aes(x = flipper_length_mm)) +
+      geom_histogram(aes(fill = species), alpha = 0.5, position = 'identity') +
+      theme_classic() + 
+        scale_fill_viridis(option = 'cividis', discrete = TRUE) 
+
+## PLOT 8  
+  
+penguins %>%
+      select(species, body_mass_g, ends_with('_mm')) %>% 
+      GGally::ggpairs(aes(fill = species)) +
+      theme_classic() + 
+      scale_fill_viridis(option = 'cividis', discrete = TRUE) 
+
+## PLOT 9
+
+ ggplot(penguins) +
+      geom_density_ridges(
+        aes(x = flipper_length_mm, y = species, fill = sex),
+        scale = 1.5,
+        alpha = 0.5) + 
+        scale_fill_viridis(option = 'cividis', discrete = TRUE) 
+
+## PLOT 10
+
+penguins %>%
+      ggplot(aes(x=flipper_length_mm, y=species, fill=species))+
+      stat_slab(aes(thickness = stat(pdf*n)), 
+                scale = 0.7) +
+      stat_dotsinterval(side = 'bottom', 
+                        scale = 0.7, 
+                        slab_size = NA) +
+       scale_fill_viridis(option = 'cividis', discrete = TRUE) 
+  
+## PLOT 11
+
+penguins %>%
+      drop_na() %>%
+      count(sex, species) %>%
+      ggplot() + geom_col(aes(x = species, y = n, fill = species)) +
+      geom_label(aes(x = species, y = n, label = n)) +
+      facet_wrap(~sex) +
+      theme_minimal() +
+        scale_fill_viridis(option = 'cividis', discrete = TRUE) +
+      labs(title = 'Penguins Species ~ Gender')
+
+## PLOT 12
+
+ggparcoord(data = penguins, columns = 3:6, alphaLines = 0.2, groupColumn = 'species', boxplot=TRUE) +
+      theme_minimal() +
+        scale_colour_viridis(option = 'cividis', discrete = TRUE) +
+      labs(title = 'Penguins Species ~ Gender')
+ 
+ 
+  
+  "
+  
+  output$text <- renderText({
+    
+    paste("```\n", tab1_code, "```\n", sep = "")
+    
+    
+  })
+  
+}
+
+shinyApp(ui, server)
