@@ -13,3 +13,12 @@ and also have the code that generates the graphics in an additional tab.
 Currently in the works: Geo-TIFF Brewer, that allows to try different palletes on GEO-TIFF files, and raster data (i.e. drone,- and satellite images).
 
 How can you help? It would be nice if you have some ggplot-Plots that you often use, or are a standard in your field, but are very hard to make or made you abr'ed ("Annoyed beyond recognition") in the process. thomas.wabnig@boku.ac.at
+
+
+How to use?
+
+1. If you have not installed it, download R-Studio.
+2. Go to File/New file/Shiny Web App and "Single File".
+3. Delete everything in the upper-left part of the console.
+4. Copy-paste the entire code (I provided 4 different ones).
+5. Click Run App.
