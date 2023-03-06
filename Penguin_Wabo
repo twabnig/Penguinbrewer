@@ -1,7 +1,281 @@
-Plots
-Code
-```
+library(tidyverse)
+library(scales)
+library(ggpubr)
+library(palmerpenguins)
+library(gridExtra)
+library(ggdensity)
+library(ggridges)
+library(ggdist)
+library(GGally)
+library(RColorBrewer)
+library(patchwork)
 
+newer.pal <- function(n, palette) {
+  switch(palette,
+         "boku" = colorRampPalette(c("#0cace4","#1d95c9","#1578b2","#2b8634","#6962a0","#f05834","#f37533","#f68b30","#d29642","#95ae3f","#698e3d","#2b8341","#156a3a","#009489"))(n),
+         "blackandwhite" = colorRampPalette(c('#000000','#565656','#7d7d7d','#9d9d9d','#bababa','#d3d3d3','#eaeaea','#ffffff'))(n), "viridis" = colorRampPalette(c("#440154", "#482878", "#3e4a89", "#31688e", "#26828e", "#1f9e89", "#35b779", "#6dcd59", "#c5f528", "#fde725"))(n),                                                
+         "cividis" = colorRampPalette(c("#00224e", "#002f6e", "#223b6e", "#39486c", "#4c556c", "#5d616e", "#7c7b78", "#c5b568", "#d8c45c", "#ecd54a", "#fee838"))(n), 
+         "pal1" = colorRampPalette(c("#060201", "#663333", "#7b6864", "#f4b248", "#fff727"))(n),
+         "pal2" = colorRampPalette(c("#405d85", "#a46779", "#dba7ad", "#ffc25b", "#c8bfb8"))(n),
+         "pal3" = colorRampPalette(c("#e97201", "#96640b", "#ffc228", "#ff6028", "#ba003e"))(n),
+         "pal4" = colorRampPalette(c("#5d574d", "#81796c", "#d4d4d4", "#a3be8c", "#fce295"))(n),
+         "pal5" = colorRampPalette(c("#002521", "#408083", "#a0b1bd", "#fa7835", "#5a2b1f"))(n),
+         "pal6" = colorRampPalette(c("#380031", "#c16ec0", "#f07e01", "#004600", "#82b610"))(n),
+         "pal7" = colorRampPalette(c("#1b2725", "#44734f", "#c4c5e3", "#4264bd", "#0a1837"))(n),
+         "pal8" = colorRampPalette(c("#2a1a41", "#886b93", "#d4e2e5", "#81560f", "#e7a453"))(n),
+         "pal9" = colorRampPalette(c("#9600ff", "#00c7fa", "#0b1e90", "#f3cb5e", "#d5c263"))(n),
+         "pal10" = colorRampPalette(c("#3c2215", "#793800", "#e3a806", "#a11009", "#fd5a51"))(n),
+         "pal11" = colorRampPalette(c("#021116", "#00303a", "#00303a", "#2b5500", "#00cb33"))(n),
+         "pal12" = colorRampPalette(c("#282b34", "#685163", "#ec9e3d", "#b7773a", "#7a471a"))(n),
+         "pal13" = colorRampPalette(c("#0c0807", "#49517f", "#b9d1f9", "#953f04", "#f5c15c"))(n),
+         "pal14" = colorRampPalette(c("#3b3e45", "#c1c2c6", "#a49600", "#bcba67", "#1000a5"))(n),
+         "firehouse" = colorRampPalette(c("#fd0200", "#ffb001", "#00017a", "#ff3901", "#fef102", "#03552f", "#fe7903", "#6db605"))(n),
+         "heavenly" = colorRampPalette(c("#65c2a5", "#fb9058", "#8ba1c8", "#e986c6", "#a9d949", "#ffd82e", "#e4c694"))(n),
+         "prime"  = colorRampPalette(c("#010101", "#fe0000", "#00ff07", "#0002fe", "#ff01ff", "#02fcff", "#979797"))(n),
+         "party" = colorRampPalette(c("#eb182d", "#447fbb", "#56a454", "#9659a2", "#ff7c06", "#f9fa2e", "#965e33"))(n),
+         "forest" = colorRampPalette(c("#003500", "#004e00", "#009d00", "#00ca00", "#98ca00", "#4eec00", "#a7a70a", "#ffff00"))(n),
+         "tryme" = colorRampPalette(c("#aa5c23", "#fc8a34", "#515359", "#787c85","#a25822", "#9e861b","#761d0d", "#b02c13", "#506694", "#7798dc"))(n),
+         "lego1" = colorRampPalette(c("#080808", "#5c220b", "#bb0505", "#e86c02", "#e7b401", "#018400", "#63a1c7", "#005da6", "#64a2c8", "#e1dfe0", "#d83875"))(n),
+         "cracktheskye" = colorRampPalette(c("#000104", "#270000", "#5e1518", "#dd120b", "#4d3478", "#5388d6", "#d69734", "#ffe16a"))(n),
+         "leviathan" = colorRampPalette(c("#010028","#003f62","#0d88b2","#92cae1","#9e8c4c","#b8912a","#be7725","#d1721e","#de512f","#a23a21"))(n),
+         "rarities" = colorRampPalette(c("#3c1010","#671510","#3d1c2b","#483a46","#8f7f4d","#d2c9b1","#3a4e4d","#182f2c","#132527"))(n),
+         "narkina5" = colorRampPalette(c("#0d0d0d", "#3b3e47", "#627383", "#403232", "#8d5558", "#a9a58c", "#973f2c", "#65271a"))(n),
+         "oncemore" = colorRampPalette(c("#040700","#1a5428","#197931","#9bc935","#f66306","#ebdd7a","#4291a2","#195da6","#032852"))(n),
+         "crash" = colorRampPalette(c("#302566","#0c4570","#145946","#712465","#562720","#959938","#ca9037","#a22a6b","#ff67b9","#b82b2b"))(n),
+         "cometommorow" = colorRampPalette(c("#000000","#6653bc","#8c4cb2","#cf5aa0","#e07373","#e87c5b","#deaa6b","#d7dc7a","#cbe482","#b1ea8c","#8dbf8a","#177d11"))(n),
+         "hollenburg" = colorRampPalette(c("#712822", "#6c6a53", "#809598", "#7f6534", "#2d3c5d", "#3a66bf", "#22aad1", "#4efdef"))(n),
+         "zirbitz" = colorRampPalette(c("#2a2220","#6d5f1e","#afa661","#c4ac88","#f4e2e5","#adb9d1","#4871a7","#022d64"))(n),
+         "piggy" = colorRampPalette(c("#270803","#6e230c","#e95e03","#fed351","#e8eb04","#0e7204","#658b00","#b7f70e"))(n),
+         "nockberge" = colorRampPalette(c("#112116","#3b3e1f","#707f00","#adbf41","#fbc800","#3b5353","#98c8df","#df0a5c"))(n),
+         "hochosterwitz" = colorRampPalette(c("#2b3019","#70791c","#e2f533","#52483c","#deb887","#878265","#a56bfb","#0066ca"))(n),
+         "queenstown" = colorRampPalette(c("#2a2e31","#2c2a2b","#663c23","#384124","#c56054","#f0a784","#f3f565","#fff8a6"))(n),
+         "mtcook" = colorRampPalette(c("#1f4157","#2b6184","#267a92","#60b8d0","#ffdebe","#ffae43","#fc5601","#cc2500"))(n),
+         "quint1" = colorRampPalette(c("#f26a3c","#fb0007","#00a6f2","#b8f7ff","#20b319"))(n),
+         "quint2" = colorRampPalette(c("#000f3f","#0750b5","#8dff10","#b20000","#3c0007"))(n),
+         "quint3" = colorRampPalette(c("#240011","#660011","#c86600","#f3cc71","#ff2892"))(n),
+         "quint4" = colorRampPalette(c("#ff9f50","#b7df6d","#d4d4d4","#bdaf1f","#a91100"))(n),
+         "quint5" = colorRampPalette(c("#f66f00","#84b629","#a01f00","#d2d526","#cfc398"))(n),
+         "quint6" = colorRampPalette(c("#5d0000","#96d02c","#3a29c1","#004600","#b678be"))(n),
+         "quint7" = colorRampPalette(c("#090100","#8a2301","#f78e1a","#fdc514","#fdf0c9"))(n),
+         "quint8" = colorRampPalette(c("#43c7d5","#043c62","#e02111","#d2ae8d","#f9b338"))(n),
+         "quint9" = colorRampPalette(c("#122042","#1f7bc5","#99c8fe","#b6c476","#fde854"))(n),
+         "quint10" = colorRampPalette(c("#aa4300","#ff8706","#01d4ff","#a11109","#fd5a51"))(n),
+         "quint11" = colorRampPalette(c("#7d3607","#00303a","#00a4bf","#ad2b20","#56002d"))(n),
+         "quint12" = colorRampPalette(c("#454640","#7b673d","#f1a724","#d8ca11","#fff992"))(n),
+         "quint13" = colorRampPalette(c("#2c69a4","#aedeaa","#915b8b","#2b8634","#c8ca15"))(n),
+         "nocontrol" = colorRampPalette(c("#d70c39","#b13383","#d7729a","#f7e612","#06a876","#0687ad","#f37533","#c13881","#48b314","#dc88ad"))(n),
+         "fearofthedark" = colorRampPalette(c("#000000","#051279", "#b1ecf4","#f3eab1","#e7e181","#f2e028","#b79188","#f37533","#d1332d"))(n),
+         "fadingwest" = colorRampPalette(c("#192730","#4c88a0","#6fb1bd","#bdf7eb","#fac98f","#e99950","#ec510e","#bd313e","#92222e"))(n),
+         "getlucky" = colorRampPalette(c("#050402","#330a06","#880308","#cca001","#d38437","#cbdad3"))(n),
+         "tealormuted" = colorRampPalette(c("#00414e","#22596e","#6d7072","#7c7978","#b28b70","#d8925c","#ec944a","#fe9938"))(n),
+         "melancholia1" = colorRampPalette(c("#070f12","#0c222d","#2d4046","#303f2a","#454432","#77827c","#ddccbc","#b3a896","#786956","#4f402d"))(n),
+         "melancholia2" = colorRampPalette(c("#0f1813","#1d2a18","#284026","#4a422d","#b47c6b","#c6a788","#ddd6c4"))(n),
+         "clockwork" = colorRampPalette(c("#4e0121","#950026","#ef002e","#e47875","#89846e","#c9c379","#ebf602","#0eb857","#00aafa","#272869"))(n),
+         "earth" = colorRampPalette(c("#8C3A3A", "#C9AD7C", "#6DAA72", "#9F7B5F", "#D1C0B0"))(n),
+         "pastels" = colorRampPalette(c("#BFD7EA", "#D4A6C9", "#F1B7B1", "#F4CDA5", "#B8D8B9"))(n),
+         "jewels" = colorRampPalette(c("#0C2340", "#782F40", "#3A3E3B", "#D98E2C", "#B24347"))(n),
+         "almost grey" = colorRampPalette(c("#EFEFEF", "#D1D1D1", "#B3B3B3", "#FFCE00", "#FF0084"))(n),
+         "metallics" = colorRampPalette(c("#A6A6A6", "#C0B283", "#848484", "#BFBFBF", "#A8A8A8"))(n),
+         "bold" = colorRampPalette(c('#FF00FF','#FFFF00', '#00FF00','#00FFFF','#FF0000'))(n), 
+         "neon" = colorRampPalette(c('#F8D568','#FF1AFF','#00FF99','#00BFFF','#FF1A1A'))(n),
+         "acid" = colorRampPalette(c('#FFD300','#FF00FF','#00FF00','#FF4500', '#00FFFF'))(n),
+         "retro" = colorRampPalette(c('#FFC0CB','#008080','#800080','#FFFF00','#FF4500'))(n),
+         "medieval1" = colorRampPalette(c('#FF0000','#FFA500','#FFFF00','#008000','#0000FF'))(n),
+         "medieval2" = colorRampPalette(c('#800000','#FFD700','#8B4513','#FFE4C4','#F0E68C'))(n),
+         "medieval3" = colorRampPalette(c('#4169E1','#228B22','#FFD700','#FF8C00','#B22222'))(n),
+         "medieval4" = colorRampPalette(c('#FFD700','#8B0000','#800080','#2F4F4F','#FFE4C4'))(n),
+         "medieval5" = colorRampPalette(c('#A0522D','#808000','#CD853F','#2F4F4F','#F5DEB3'))(n),
+         "medieval6" = colorRampPalette(c('#006400','#8B0000','#CD853F','#2F4F4F','#F5DEB3'))(n),
+         "pop1" = colorRampPalette(c('#FFC0CB','#87CEFA','#FFD700','#00FF00','#FF00FF'))(n),
+         "pop2" = colorRampPalette(c('#FF1493','#00FF00','#FFFF00','#1E90FF','#FF4500'))(n),
+         "pop3" = colorRampPalette(c('#FF69B4','#8B0000','#FFFF00','#32CD32','#1E90FF'))(n), 
+         "pop4" = colorRampPalette(c('#800080','#2F4F4F','#FFA07A','#FFDAB9','#FFB6C1'))(n),
+         "pop5" = colorRampPalette(c( '#FF7F50','#00BFFF','#FFD700','#32CD32','#FF69B4'))(n), 
+         "kanagawa" = colorRampPalette(c( '#454a4d','#c1b8a9','#ded4c5','#7e9ca7','#082349'))(n),
+         "vermeer" = colorRampPalette(c( '#0a030b','#465da6','#ceb77b','#8a6132','#71231b'))(n), 
+         "starrynight" = colorRampPalette(c('#010406','#175781','#a0c899','#f8e389','#fecf3c'))(n),
+         "lissi" = colorRampPalette(c('#0a030b','#465da6','#ceb77b','#8a6132','#71231b'))(n),
+         "Rainbow"  = colorRampPalette(c("#9400D3", "#0000FF", "#00FF00", "#FFFF00", "#FF7F00", "#FF0000"))(n),
+         "Spectrum"  = colorRampPalette(c("#FF0000", "#FFA500", "#FFFF00", "#008000", "#0000FF", "#4B0082", "#EE82EE"))(n),
+         "Ocean1"  = colorRampPalette(c("#3E83C9", "#2AB0E9", "#1AC9E9", "#48D0A0", "#A8C545", "#FFC902"))(n),
+         "Ocean2"  = colorRampPalette(c("#0077BE", "#0095D5", "#00BFFF", "#20B2AA", "#98FB98", "#00FA9A"))(n),
+         "Terrain"  = colorRampPalette(c("#826C41", "#E6C37A", "#F5F5DC", "#9CCB4B", "#6E8B3D", "#556B2F"))(n),
+         "Gray1"  = colorRampPalette(c("#FFFFFF", "#E6E6E6", "#CCCCCC", "#999999", "#666666", "#333333"))(n),
+         "Gray2"  = colorRampPalette(c("#1E90FF", "#FF6347", "#32CD32", "#FFD700", "#8A2BE2", "#FFA500", "#00CED1", "#FF69B4"))(n),
+         "Heat"  = colorRampPalette(c("#B21807", "#D6604D", "#FC8D59", "#FDB863", "#FEE0B6", "#FFFFF9"))(n),
+         "Cool"  = colorRampPalette(c("#228B22", "#00BFFF", "#FFD700", "#FF8C00", "#B22222", "#8B0000"))(n),
+         "Warm"  = colorRampPalette(c("#A52A2A", "#CD5C5C", "#FF7F50", "#FFD700", "#F0E68C", "#EEE8AA"))(n),
+         "Sunset"  = colorRampPalette(c("#FF4500", "#FF7F50", "#FFA07A", "#F08080", "#DC143C", "#8B0000"))(n),
+         "Nature"  = colorRampPalette(c("#8B4513", "#8F9779", "#228B22", "#8B0000", "#000080", "#8B008B"))(n),
+         "Diverging1"  = colorRampPalette(c("#004b75", "#5090ac", "#f2f081", "#abc667", "#2d3714"))(n),
+         "Diverging2"  = colorRampPalette(c("#0b2617", "#4e5d5a", "#92a095", "#92a095", "#382e21"))(n),
+         "Diverging3"  = colorRampPalette(c("#00000d", "#00568b", "#f5e38f", "#6f4048", "#3d162a"))(n),
+         "Diverging4"  = colorRampPalette(c("#380535", "#5d017f", "#dcdf00", "#b54223", "#7d2019"))(n),
+         "Lighter"  = colorRampPalette(c("#b62135", "#78a019", "#f5a301", "#3f7ac8", "#dda58c"))(n),
+         "SolitaryShell1"  = colorRampPalette(c("#C4C4C4", "#B0D8D1","#E9B7B8","#E7A9D9","#F8D5A5"))(n),
+         "SolitaryShell2"  = colorRampPalette(c("#C2B280","#A9A26E","#3D2B1F","#996515","#937B55"))(n),
+         "SolitaryShell3"  = colorRampPalette(c("#8FB8DE","#92CDDC","#8DC3C3","#97B2B2","#839B9B"))(n),
+         "SolitaryShell4"  = colorRampPalette(c("#B0A89C","#9B9B7A","#A6947B","#8F7C62","#9B7B8D"))(n),
+         "SolitaryShell5"  = colorRampPalette(c("#6A8EAE","#7E9E9D","#8B9B78","#98A27E","#4F4E4E"))(n),
+         "Tomassi" = colorRampPalette(c("#131518","#a6a8a7","#cbd1cb","#efe49b","#c9bc6e"))(n),
+         "Karen" = colorRampPalette(c("#0049b4","#018af4","#a3c4bb","#a7a09a","#55595f"))(n),
+         "KIK" = colorRampPalette(c("#79021e","#ee0d1b","#e87596","#d9bfc8","#bbbbbb","#b0cba0","#4e7854","#09585f","#05232d"))(n),
+         "Parfum" = colorRampPalette(c("#8c3b2e","#ef784e","#d6ac96","#ffcf69","#e5a126","#c06e18","#bac1a2","#3c9c81","#1f272a"))(n),
+         "Eggs" = colorRampPalette(c("#93dd6c","#d6706b","#ecd972","#f2b9ca","#5fabcd","#ffaa59"))(n),
+         "Blankets" = colorRampPalette(c("#452e36","#e67066","#f9bcc4","#c0d4bb","#90a6cf","#48597d","#111f46"))(n)
+
+       
+  )
+}
+
+custom_palette_names <- c("boku","blackandwhite","viridis", "cividis", "pal1","pal2","pal3","pal4","pal5","pal6","pal7","pal8","pal9","pal10","pal11","pal12","pal13","pal14","firehouse","heavenly","prime","party","forest","tryme","lego1","cracktheskye","leviathan","rarities","narkina5","oncemore","crash","cometommorow","hollenburg","zirbitz","piggy","nockberge", 
+                          "hochosterwitz","queenstown","mtcook","quint1","quint2","quint3","quint4","quint5","quint6","quint7","quint8","quint9","quint10","quint11","quint12","quint13","nocontrol","fearofthedark", "fadingwest","getlucky", "tealormuted", "melancholia1","melancholia2","clockwork","earth","pastels","jewels","almost grey","metallics","bold","neon",
+                          "acid","retro","medieval1","medieval2","medieval3","medieval4","medieval5","medieval6","pop1","pop2","pop3","pop4","pop5","kanagawa","vermeer","starrynight","lissi","Rainbow","Spectrum","Ocean1","Ocean2","Terrain","Gray1","Gray2","Heat","Cool","Warm","Sunset","Nature","Diverging1","Diverging2","Diverging3","Diverging4","Lighter", "SolitaryShell1", "SolitaryShell2", "SolitaryShell3", "SolitaryShell4", "SolitaryShell5","Tomassi",
+"Karen","KIK","Parfum","Eggs","Blankets")
+
+penguins <- na.omit(penguins)
+sp <-  c("Cobblepot", "Devito", "Farrell", "Adelie", "Chinstrap", "Gentoo", "Meredith", "Taylor")
+new_species <- sample(sp, nrow(penguins), replace=T)
+penguins$species <- c(new_species)
+
+
+mean_mass <- penguins %>%
+  group_by(species, sex) %>% 
+  summarise(mean_mass = mean(body_mass_g, na.rm = TRUE)) 
+means <- aggregate(body_mass_g ~ species, data = penguins, mean)
+
+##################
+ui <- fluidPage(
+  tabsetPanel(
+    tabPanel("Plots",
+             radioButtons("palette", "Select Wabo Palette:", 
+                          choices = custom_palette_names, 
+                          selected = "boku", inline = TRUE),
+             column(12, plotOutput("density1"), plotOutput("density2"), 
+                    plotOutput("density3"), plotOutput("density4"), plotOutput("density5"),plotOutput("density6"),plotOutput("density7"),plotOutput("density8"),plotOutput("density9"),plotOutput("density10"),plotOutput("density11"),plotOutput("density12")),
+             column(12, textOutput("density1_code"), textOutput("density2_code"), 
+                    textOutput("density3_code"), textOutput("density4_code"), textOutput("density5_code"),textOutput("density6_code"),textOutput("density7_code"),textOutput("density8_code"),textOutput("density9_code"),textOutput("density10_code"), textOutput("density11_code"), textOutput("density12_code"))
+    ),
+    tabPanel("Code",
+             verbatimTextOutput("text")
+    )
+  )
+)
+
+server <- function(input, output) {
+  
+  
+  my_palette <- reactive({
+    newer.pal(8, input$palette)})
+  
+  output$density1 <- renderPlot({
+    ggplot(penguins, aes(x = bill_length_mm, fill = species)) +
+      geom_density(alpha = 0.7) + theme_bw() +
+      scale_fill_manual(values = my_palette()) +
+      theme(legend.position = c(0.8, 0.8))
+  })
+  
+  output$density2 <- renderPlot({
+    ggplot(penguins, aes(x = species, y = body_mass_g, fill=species)) +
+      geom_boxplot() +
+      scale_fill_manual(values = my_palette()) +
+      theme(legend.position = c(0.1, 0.8))
+  })
+  
+  output$density3 <- renderPlot({
+    
+    ggplot(penguins, aes(x = species, y = body_mass_g, fill = species)) + 
+      geom_violin(alpha = 0.3) + 
+      geom_boxplot(width = 0.2) + 
+      geom_density(kernel = "gaussian", adjust = 2, fill = "white", alpha = 0.3) +
+      geom_point(alpha = 0.5, size = 2) +
+      geom_point(data = means, aes(x = species, y = body_mass_g), shape = 21, size = 4) +
+      theme_classic() + 
+      labs(x = "Species", y = "Body Mass (g)") + 
+      ggtitle("Palmer Penguins") + 
+      scale_fill_manual(values = my_palette()) 
+    
+  })
+  
+  
+  output$density4 <- renderPlot({
+    ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, group = species)) +
+      geom_point(aes(color = species, shape = species), size = 3, alpha = 0.8) +
+      geom_smooth(method = "lm", se = FALSE, aes(color = species)) +
+      theme_classic() + 
+      scale_color_manual(values = my_palette()) 
+    
+  })
+  
+  output$density5 <- renderPlot({
+    ggplot(penguins, aes(x = 1, fill = species)) +
+      geom_bar() +
+      coord_polar(theta = "y") +
+      theme_classic() + 
+      scale_fill_manual(values = my_palette()) 
+  })
+  output$density6 <- renderPlot({
+    ggplot(penguins, aes(flipper_length_mm, bill_length_mm, fill = species)) +
+      geom_hdr(xlim = c(160, 240), ylim = c(30, 70)) +
+      geom_point(shape = 21) +
+      theme_classic() + 
+      scale_fill_manual(values = my_palette()) 
+  })
+  
+  output$density7 <- renderPlot({
+    ggplot(data = penguins, aes(x = flipper_length_mm)) +
+      geom_histogram(aes(fill = species), alpha = 0.5, position = "identity") +
+      theme_classic() + 
+      scale_fill_manual(values = my_palette()) 
+  })
+  
+  output$density8 <- renderPlot({
+    penguins %>%
+      select(species, body_mass_g, ends_with("_mm")) %>% 
+      GGally::ggpairs(aes(fill = species)) +
+      theme_classic() + 
+      scale_fill_manual(values = my_palette()) 
+  })
+  output$density9 <- renderPlot({
+    ggplot(penguins) +
+      geom_density_ridges(
+        aes(x = flipper_length_mm, y = species, fill = sex),
+        scale = 1.5,
+        alpha = 0.5) + 
+      scale_fill_manual(values = my_palette()) 
+  })
+  
+  output$density10 <- renderPlot({
+    penguins %>%
+      ggplot(aes(x=flipper_length_mm, y=species, fill=species))+
+      stat_slab(aes(thickness = stat(pdf*n)), 
+                scale = 0.7) +
+      stat_dotsinterval(side = "bottom", 
+                        scale = 0.7, 
+                        slab_size = NA) +
+      scale_fill_manual(values = my_palette()) 
+  })
+  
+  output$density11 <- renderPlot({
+    penguins %>%
+      drop_na() %>%
+      count(sex, species) %>%
+      ggplot() + geom_col(aes(x = species, y = n, fill = species)) +
+      geom_label(aes(x = species, y = n, label = n)) +
+      facet_wrap(~sex) +
+      theme_minimal() +
+      scale_fill_manual(values = my_palette()) +
+      labs(title = 'Penguins Species ~ Gender')
+  })
+  
+  output$density12 <- renderPlot({
+    ggparcoord(data = penguins, columns = 3:6, alphaLines = 0.2, groupColumn = "species", boxplot=TRUE) +
+      theme_minimal() +
+      scale_color_manual(values = my_palette()) +
+      labs(title = 'Penguins Species ~ Gender')
+  })
+  
+  tab1_code <- "
                                                                                                                                
                                                                                                                                
 ## FREE TO USE FOR ANYONE. Firehouse,Heavenly,Prime,Party, and Forest are similar to Sigmaplot. Cracktheskye, Leviathan, and Rarities are Mastodon-Albums. If you don't know what 'Narkina5' is, then what's wrong with you?
@@ -124,7 +398,11 @@ hochosterwitz' = colorRampPalette(c('#2b3019','#70791c','#e2f533','#52483c','#de
 'SolitaryShell4'  = colorRampPalette(c('#B0A89C','#9B9B7A','#A6947B','#8F7C62','#9B7B8D'))(n),
 'SolitaryShell5'  = colorRampPalette(c('#6A8EAE','#7E9E9D','#8B9B78','#98A27E','#4F4E4E'))(n),
 'Tomassi' = colorRampPalette(c('#131518','#7a6a8a7','#cbd1cb','#efe49b','#c9bc6e'))(n),
-'Karen' = colorRampPalette(c('#0049b4','#018af4','#a3c4bb','#a7a09a','#55595f'))(n)
+'Karen' = colorRampPalette(c('#0049b4','#018af4','#a3c4bb','#a7a09a','#55595f'))(n),
+'KIK' = colorRampPalette(c('#79021e','#ee0d1b','#e87596','#d9bfc8','#bbbbbb','#b0cba0','#4e7854','#09585f','#05232d'))(n),
+'Parfum' = colorRampPalette(c('#8c3b2e','#ef784e','#d6ac96','#ffcf69','#e5a126','#c06e18','#bac1a2','#3c9c81','#1f272a'))(n),
+'Eggs' = colorRampPalette(c('#93dd6c','#d6706b','#ecd972','#f2b9ca','#5fabcd','#ffaa59'))(n),
+'Blankets' = colorRampPalette(c('#452e36','#e67066','#f9bcc4','#c0d4bb','#90a6cf','#48597d','#111f46'))(n)
 )
 }
                                                                                                                                
@@ -231,4 +509,15 @@ scale_colour_manual(values = my_palette)  +
 labs(title = 'Penguins Species ~ Gender')
                                                                                                                    
                                                                                                                                
-```
+"
+
+output$text <- renderText({
+  
+  paste("```\n", tab1_code, "```\n", sep = "")
+  
+  
+})
+
+}
+
+shinyApp(ui, server)
